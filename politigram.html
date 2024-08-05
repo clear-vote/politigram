@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- TODO: This should be a dependency, not a CDN -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .politigram {
+            width: 100%; /* Take full width of the parent */
+            height: 100%; /* Take full height of the parent */
+            display: flex; /* Enable Flexbox */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            position: relative; /* Make it a positioning context for the tooltip */
+            z-index: 1;
+        }
+        .politigram svg {
+            overflow: visible;
+        }
+        .politigram__text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5; /* Higher z-index */
+            background: rgba(255, 255, 255, .9);
+            border-radius: 50%; /* Make it an oval */
+            transition: opacity 0.1s ease-in-out, box-shadow 0.1s ease-in-out, background 0.1s ease-in-out, color 0.1s ease-in-out;
+            opacity: 0; /* Start with hidden text */
+        }
+        .font--header--politigram {
+            transition: all 0.1s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div style="width: 100vw; height: 100vh;">
+        <div class="politigram"></div>
+        <div class="politigram__text">
+            <h2 class="font--header--politigram font--header"></h2>
+        </div>
+    </div>
+    <script>
+        const candidateId = 0;
+        let selectedPolitigram = null;
+        let touchLock = false
+        
+        const candidate = {
+            name: "Becka Johnson Poppe",
+            image: "https://info.kingcounty.gov/kcelections/vote/contests/GetPhoto.ashx?webapiaddress=https://websvc.kingcounty.gov/elections/WEBAPI/&candidateid=1604694&electionid=38&contestid=123797",
+            about: {
+                professionalContent: {
+                    elected_experience: {
+                        text: "Lorem ipsum, dolor sit amet consectetur adipisicing elit.",
+                        community: [0, 10],
+                        liberty: [15, 25]
+                    },
+                    other_professional_experience: {
+                        text: "Dolorem Qui id vero ab perferendis aliquam sint.",
+                        humanitarianism: [5, 30],
+                        community: [31, 34]
+                    },
+                    occupation: {
+                        text: "Tenetur soluta totam omnis maxime exercitationem adipisci accusamus magni eligendi obcaecati, at porro doloremque unde.",
+                        prosperity: [20, 27]
+                    }
+                },
+                personalContent: {
+                    community_service: {
+                        text: "Lorem ipsum, dolor sit amet consectetur adipisicing elit.",
+                        stewardship: [0, 10],
+                        humanitarianism: [15, 25]
+                    },
+                    statement: {
+                        text: "Dolorem Qui id vero ab perferendis aliquam sint.",
+                        stewardship: [5, 30],
+                        humanitarianism: [31, 34]
+                    },
+                },
+            },
+            politigram: {
+                "community": 90,
+                "humanitarianism": 70,
+                "prosperity": 75,
+                "liberty": 20,
+                "stewardship": 95
+            }
+        }
+    </script>
+    
+    <script>
+        const data = Object.entries(candidate.politigram).map(([key, value]) => ({
+            name: key,
+            value: value
+        }));
+
+        const totalValue = d3.sum(data, d => d.value);
+
+        // visually sets the minimum value for the radius of the smallest segment
+        // as a percentage of the full radius
+        // if we were to set this to 0, the smallest segment in a row would not even appear!
+        const MIN_RADIUS = 0.25
+
+        // visually sets the minimum value for the arc of the smallest segment
+        // as a percentage of the full arc
+        // 0 === invisible
+        const MIN_ARC = 0.50
+
+        const BRIGHTNESS = 0.55;
+        
+
+        // divide `side` by 200
+        // size of `side` / 2 for radius
+        // size of `side` / 100 for maximum politigram rating
+        // TODO: side should match the width of the container it is in
+        const side = Math.min(window.innerWidth, window.innerHeight);
+        const radius = side / 200; 
+
+        const color = d3.scaleOrdinal()
+            .domain(data.map(d => d.name))
+            .range(['#16BAC5', '#C84630', '#EA9010', '#C179B9', '#447604']);
+
+        // Radius length
+        const arc = d3.arc()
+            .innerRadius(0)
+            .outerRadius(d => radius * (d.data.value + MIN_RADIUS * (100 - d.data.value)))
+            .cornerRadius(side / 7);
+            
+
+        // Hover length
+        // TODO: (size / 10) arbitrarily added as scaler
+        const arcHover = d3.arc()
+            .innerRadius(0)
+            .outerRadius(d => (radius * (d.data.value + MIN_RADIUS * (100 - d.data.value))) + (side / 20)) // Increase radius on hover
+            .cornerRadius(side / 10);
+
+        // New pie chart, computes start and end angles for each segment
+        const pie = d3.pie()
+            .value(d => (((d.value / totalValue) * (1 - MIN_ARC)) + (MIN_ARC / data.length)))
+            .sort(null);
+
+        const svg = d3.select(".politigram")
+            .append("svg")
+            .attr("width", side)
+            .attr("height", side)
+            .append("g")
+            // then we have to center the politigram in the container
+            .attr("transform", `translate(${side / 2}, ${side / 2})`);
+
+        function updateSelectedName() {
+            const nameDiv = document.querySelector('.politigram__text');
+            if (selectedPolitigram) {
+                const name = selectedPolitigram.__data__.data.name;
+                const color = d3.color(d3.select(selectedPolitigram).attr('fill')).darker(1);
+                nameDiv.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                nameDiv.style.color = color;
+                nameDiv.style.boxShadow = '0px 0px 15px 15px rgba(255, 255, 255, .9)';
+                nameDiv.style.opacity = '1'; // Ensure visibility
+            } else {
+                nameDiv.textContent = '';
+                nameDiv.style.boxShadow = '0px 0px 0px 0px rgba(255, 255, 255, 0)'; // Animate out
+                nameDiv.style.opacity = '0'; // Fade out text
+            }
+        }
+
+        // Handles the logic for touching the svg
+        svg.selectAll('path')
+            .data(pie(data))
+            .enter()
+            .append('path')
+            .attr('d', arc)
+            .attr('fill', d => color(d.data.name))
+            .on('mouseleave', handleMouseLeave)
+            .on('mouseover', handleMouseOver)
+            
+        document.addEventListener('mousedown', handleClick);
+
+        function handleClick(event) {
+            const isClickInside = svg.node().contains(event.target);
+            // deselect click
+            const targetPath = d3.select(event.target).datum();
+            if (!isClickInside && selectedPolitigram) {
+                d3.select(selectedPolitigram)
+                    .transition()
+                    .duration(200)
+                    .attr('d', arc) // Revert to the original arc
+                    .attr('fill', color(selectedPolitigram.__data__.data.name));
+                selectedPolitigram = null;
+                touchLock = false;
+                updateSelectedName();
+            } else if (isClickInside && targetPath) {
+                handleInsideClick.call(event.target, event, targetPath);
+            }
+        }
+
+        function handleMouseOver(event, d) {
+            if (!touchLock) {
+                selectedPolitigram = this;
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr('d', arcHover)
+                    .attr('fill', d3.color(color(d.data.name)).brighter(BRIGHTNESS/2));
+                updateSelectedName();
+            }
+        }
+        
+        function handleMouseLeave(event, d) {
+            // if we are just mousing over, we can trigger a mouse out event
+            if (!touchLock && selectedPolitigram !== null) {
+                selectedPolitigram = null;
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr('d', arc) // Revert to the original arc
+                    .attr('fill', color(d.data.name));
+                updateSelectedName();
+            }
+        }
+
+        function handleInsideClick(event, d) {
+            // if no wing is selected, then we can take the touchlock
+            if (!touchLock) {
+                touchLock = true;
+                selectedPolitigram = this;
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr('d', arcHover) // Use the hover arc
+                    .attr('fill', d3.color(color(d.data.name)).brighter(BRIGHTNESS));
+                updateSelectedName();
+            // transition touch
+            // here we have a touchlock set, but we are selecting another wing
+            } else if (this !== selectedPolitigram) {
+                const oldColor = color(selectedPolitigram.__data__.data.name);
+                d3.select(selectedPolitigram)
+                    .transition()
+                    .duration(200)
+                    .attr('d', arc) // Revert to the original arc
+                    .attr('fill', d3.color(oldColor));
+                selectedPolitigram = this;
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr('d', arcHover) // Use the hover arc
+                    .attr('fill', d3.color(color(d.data.name)).brighter(BRIGHTNESS));
+                updateSelectedName();
+            // deselect click
+            } else {
+                d3.select(selectedPolitigram)
+                    .transition()
+                    .duration(200)
+                    .attr('d', arc) // Revert to the original arc
+                    .attr('fill', color(d.data.name));
+                selectedPolitigram = null;
+                touchLock = false;
+                updateSelectedName();
+            }
+        }
+
+        // Function to rotate and expand the pie chart simultaneously
+        function rotateAndExpandPie() {
+            svg.transition()
+            .duration(850)
+            .ease(d3.easeCubicOut) // Use easeCubicOut for quick start and smooth stop
+            .attrTween("transform", function() {
+                return function(t) {
+                    const scale = d3.interpolate(0, 1)(t);
+                    const rotate = d3.interpolate(0, 360)(t);
+                    return `translate(${side / 2}, ${side / 2}) scale(${scale}) rotate(${rotate})`;
+                };
+            });
+        }
+        
+        // Call the rotateAndExpandPie function when the page loads
+        rotateAndExpandPie();
+    </script>
+</body>
+</html>

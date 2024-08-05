@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Politician Card</title>
+    
+    <!-- Font Imports -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Font Styles */
+        .font--header {
+            font-family: 'IBM Plex Sans', sans-serif; /* Header font */
+            font-weight: 600; /* Bold for headers */
+            font-size: 5vw; /* Set font size as a fraction of the viewport */
+            margin: 0;
+        }
+
+        .font--header--grid {
+            font-size: 6.5vw; /* Size for grid headers */
+        }
+
+        .font--base {
+            font-family: 'IBM Plex Sans', sans-serif; /* Base font */
+            font-weight: 400; /* Regular for base text */
+            font-size: 4.5vw; /* Set font size as a fraction of the viewport */
+            margin: 0;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: 10fr 4fr 4fr; /* Set the width of grids */
+            grid-template-rows: 11vh 27vh;
+            grid-template-areas: 
+                "name accept reject"
+                "politigram profile-pic profile-pic";
+            gap: 1px;
+        }
+
+        @media (min-width: 600px) {
+            .grid {
+                grid-template-columns: 0.5fr 0.5fr 1.61fr;
+                grid-template-areas: 
+                    "name name politigram"
+                    "profile-pic profile-pic politigram"
+                    "accept reject politigram";
+            }
+        }
+
+        /* Grid Box Styles */
+        .grid__box {
+            background-color: white; /* Background color for grid boxes */
+            color: black; /* Text color */
+            padding: 0; /* No padding */
+            text-align: center; /* Center text */
+        }
+
+        .grid__box--name { grid-area: name; }
+        .grid__box--accept { grid-area: accept; }
+        .grid__box--reject { grid-area: reject; }
+        .grid__box--politigram { grid-area: politigram; }
+        .grid__box--profile-pic {
+            grid-area: profile-pic;
+            width: 100%; /* Set width to fill the grid box */
+            height: 100%; /* Set height to fill the grid box */
+            overflow: hidden; /* Clip any overflow */
+            position: relative; /* Positioning context for absolute children */
+        }
+
+        /* Image formatting */
+        .grid__box--profile-pic img {
+            max-width: 100%; 
+            height: auto;
+        }
+
+        /* Button Styles */
+        .grid__button {
+            width: 100%; /* Fill the box completely */
+            height: 100%; /* Fill the box completely */
+            border: none; /* Remove border */
+            cursor: pointer; /* Pointer cursor on hover */
+        }
+
+        .grid__box--accept .grid__button {
+            color: green; /* Accept button color */
+        }
+
+        .grid__box--reject .grid__button {
+            color: red; /* Reject button color */
+        }
+    </style>
+</head>
+<body>
+    <div class="grid">
+        <div class="grid__box grid__box--name">
+            <h1 class="font--header font--header--grid"></h1>
+        </div>
+        <div class="grid__box grid__box--accept">
+            <button class="grid__button font--base">Accept</button>
+        </div>        
+        <div class="grid__box grid__box--reject">
+            <button class="grid__button font--base">Reject</button>
+        </div>
+        <div class="grid__box grid__box--profile-pic">
+            <img alt="Candidate Photo">
+        </div>
+        <div class="grid__box grid__box--politigram">
+            <button onclick="setState('community')">State 1</button>
+            <button onclick="setState('humanitarianism')">State 2</button>
+            <button onclick="setState('prosperity')">State 3</button>
+            <button onclick="setState('liberty')">State 4</button>
+            <button onclick="setState('stewardship')">State 5</button>
+        </div>
+    </div>
+    <div class="content">
+        <div class="content__professional">
+            <h2 class="font--header">Professional Background</h2>
+            <div class="content__professional__about-text"></div> <!-- About text container for professional background -->
+        </div>
+        <div class="content__personal">
+            <h2 class="font--header">Personal Background</h2>
+            <div class="content__personal__about-text"></div> <!-- About text container for personal background -->
+        </div>
+    </div>
+
+    <script>
+        // TODO: placeholder. in the future, each candidate will get their own id
+        const candidateId = 0;
+
+        const candidate = {
+            name: "Becka Johnson Poppe",
+            image: "https://info.kingcounty.gov/kcelections/vote/contests/GetPhoto.ashx?webapiaddress=https://websvc.kingcounty.gov/elections/WEBAPI/&candidateid=1604694&electionid=38&contestid=123797",
+            about: {
+                professionalContent: {
+                    elected_experience: {
+                        text: "Lorem ipsum, dolor sit amet consectetur adipisicing elit.",
+                        community: [0, 10],
+                        liberty: [15, 25]
+                    },
+                    other_professional_experience: {
+                        text: "Dolorem Qui id vero ab perferendis aliquam sint.",
+                        humanitarianism: [5, 30],
+                        community: [31, 34]
+                    },
+                    occupation: {
+                        text: "Tenetur soluta totam omnis maxime exercitationem adipisci accusamus magni eligendi obcaecati, at porro doloremque unde.",
+                        prosperity: [20, 27]
+                    }
+                },
+                personalContent: {
+                    community_service: {
+                        text: "Lorem ipsum, dolor sit amet consectetur adipisicing elit.",
+                        stewardship: [0, 10],
+                        humanitarianism: [15, 25]
+                    },
+                    statement: {
+                        text: "Dolorem Qui id vero ab perferendis aliquam sint.",
+                        stewardship: [5, 30],
+                        humanitarianism: [31, 34]
+                    },
+                },
+            },
+            politigram: {
+                "community": 0,
+                "humanitarianism": 0,
+                "prosperity": 0,
+                "liberty": 0,
+                "stewardship": 0
+            }
+        }
+
+        document.querySelector('.grid__box--name h1').textContent = candidate.name;    
+        document.querySelector('.grid__box--profile-pic img').src = candidate.image;
+    </script>
+    <script>
+
+    </script>
+    <script>
+        // Function to create <p> elements for each text field in 'about'
+        function createAboutText(aboutContainer, content) {
+            aboutContainer.innerHTML = ''; // Clear previous content
+
+            for (const key in content) {
+                const paragraphElement = document.createElement('p');
+                paragraphElement.className = 'font--base'; // Add class for styling
+                paragraphElement.id = key; // Set an ID for each paragraph
+                paragraphElement.textContent = content[key].text; // Set the text content
+                aboutContainer.appendChild(paragraphElement); // Append to the container
+            }
+        }
+
+        // Function to set the state and apply styles
+        function setState(state) {
+            // Iterate over both professional and personal background content
+            const allContent = { ...candidate.about.professionalContent, ...candidate.about.personalContent };
+
+            for (const key in allContent) {
+                const paragraph = document.getElementById(key);
+                paragraph.innerHTML = allContent[key].text; // Reset to original text
+
+                // If the state is set back to null, just set the text to be plain
+                if (state === null) {
+                    paragraph.innerHTML = paragraph.textContent;
+                // Apply styles based on the selected state
+                } else if (allContent[key][state]) {
+                    const [start, end] = allContent[key][state];
+                    const styledText = paragraph.textContent.slice(start, end);
+                    const beforeText = paragraph.textContent.slice(0, start);
+                    const afterText = paragraph.textContent.slice(end);
+
+                    let color; // Declare the color variable
+
+                    // Use switch to determine the color based on the state
+                    switch (state) {
+                        case 'community':
+                            color = 'blue';
+                            break;
+                        case 'humanitarianism':
+                            color = 'red';
+                            break;
+                        case 'prosperity':
+                            color = 'orange';
+                            break;
+                        case 'liberty':
+                            color = 'purple';
+                            break;
+                        case 'stewardship':
+                            color = 'green';
+                            break;
+                        default:
+                            throw new Error('Invalid state');
+                    }
+
+                    // Update the paragraph with styled text
+                    paragraph.innerHTML = `${beforeText}<span style="color: white; background-color: ${color};">${styledText}</span>${afterText}`;
+                }
+            }
+        }
+
+        // Initialize the about text on page load
+        createAboutText(
+            document.getElementsByClassName('content__professional__about-text')[candidateId], 
+            candidate.about.professionalContent
+        ); // For professional background
+        createAboutText(
+            document.getElementsByClassName('content__personal__about-text')[candidateId],
+            candidate.about.personalContent
+        ); // For personal background
+    </script>
+</body>
+</html>
