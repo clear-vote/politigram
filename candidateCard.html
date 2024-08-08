@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Politician Card</title>
+    <title>Politician candidate-card</title>
     
     <!-- Font Imports -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,34 +13,45 @@
     
     <!-- D3 -->
     <script src="https://d3js.org/d3.v6.min.js"></script>
+
     <style>
-        /* Font Styles */
-        .font--header--politigram {
-            font-size: 5vw;
-            font-weight: 400;
-            z-index: 5;
-        }
-        
-        .font--header {
+        /* Text Styles */
+        .candidate-card__text--header {
             font-family: 'IBM Plex Sans', sans-serif; /* Header font */
             font-weight: 600; /* Bold for headers */
             font-size: 5vw; /* Set font size as a fraction of the viewport */
             margin: 0;
         }
-
-        .font--header--grid {
-            font-size: 6.5vw; /* Size for grid headers */
+        
+        .candidate-card__text--politigram {
+            font-family: 'IBM Plex Sans', sans-serif; 
+            font-size: 4.5vw;
+            font-weight: 400;
+            font-style: italic;
+            z-index: 5;
+            text-shadow: 
+                0 0 8px rgba(255, 255, 255, 1.8), /* First layer */
+                0 0 16px rgba(255, 255, 255, 1.5), /* Second layer */
+                0 0 24px rgba(255, 255, 255, 1.2), /* Third layer */
+                0 0 24px rgba(255, 255, 255, 0.9); /* Third layer */
         }
 
-        .font--base {
+        .candidate-card__text {
             font-family: 'IBM Plex Sans', sans-serif; /* Base font */
             font-weight: 400; /* Regular for base text */
-            font-size: 4.5vw; /* Set font size as a fraction of the viewport */
+            font-size: 4vw; /* Set font size as a fraction of the viewport */
             margin: 0;
         }
 
+        .candidate-card__text--highlighted {
+            opacity: 0; /* Start hidden */
+            color: white; 
+            transition: opacity 0.4s ease-in-out; /* Fade effect */
+            border-radius: 5px;
+        }
+
         /* Grid Layout */
-        .grid {
+        .candidate-card__grid {
             display: grid;
             grid-template-columns: 10fr 4fr 4fr; /* Set the width of grids */
             grid-template-rows: 11vh 27vh;
@@ -50,34 +62,51 @@
         }
 
         @media (min-width: 600px) {
-            .grid {
-                grid-template-columns: 0.5fr 0.5fr 1.61fr;
+            .candidate-card__grid {
+                grid-template-columns: 0.5fr 1.61fr 0.5fr;
+                grid-template-rows: 13vh 13vh;
                 grid-template-areas: 
-                    "name name politigram"
-                    "profile-pic profile-pic politigram"
-                    "accept reject politigram";
+                    "politigram name name profile-pic"
+                    "politigram accept reject profile-pic"
             }
+
+            /* .candidate-card__button:hover .candidate-card__button--text {
+                display: none;
+            }
+
+            .candidate-card__button:hover .candidate-card__button--icon {
+                display: inline;
+            } */
         }
 
         /* Grid Box Styles */
-        .grid__box {
+        .candidate-card__grid-box {
             background-color: white; /* Background color for grid boxes */
             color: black; /* Text color */
             padding: 0; /* No padding */
             text-align: center; /* Center text */
         }
 
-        .grid__box--name { grid-area: name; }
-        .grid__box--accept { grid-area: accept; }
-        .grid__box--reject { grid-area: reject; }
-        .grid__box--politigram {
+        /* Grid names */
+
+        .candidate-card__grid-box--name { grid-area: name; }
+        .candidate-card__grid-box--pick { grid-area: accept; }
+        .candidate-card__grid-box--hide { grid-area: reject; }
+        .candidate-card__grid-box--profile-pic {
+            grid-area: profile-pic;
+            width: 100%; /* Set width to fill the grid box */
+            height: 100%; /* Set height to fill the grid box */
+            overflow: hidden; /* Clip any overflow */
+            position: relative; /* Positioning context for absolute children */
+        }
+        .candidate-card__grid-box--politigram {
             width: 100%;
             height: 100%;
             position: relative; /* Ensure it can contain absolutely positioned children */
         }
 
         /* Politigram */
-        .politigram {
+        .candidate-card__politigram {
             width: 100%; /* Take full width of the parent */
             height: 100%; /* Take full height of the parent */
             display: flex; /* Enable Flexbox */
@@ -86,85 +115,132 @@
             position: relative; /* Make it a positioning context for the tooltip */
             z-index: 1;
         }
-        .politigram svg {
+        .candidate-card__politigram svg {
             overflow: visible;
         }
-        .politigram__text {
+        .candidate-card__politigram--overlay {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 3; /* Higher z-index */
-            background: rgba(255, 255, 255, .9);
-            border-radius: 50%; /* Make it an oval */
             transition: opacity 0.1s ease-in-out, box-shadow 0.1s ease-in-out, background 0.1s ease-in-out, color 0.1s ease-in-out;
             opacity: 0; /* Start with hidden text */
         }
 
 
-        .grid__box--profile-pic {
-            grid-area: profile-pic;
-            width: 100%; /* Set width to fill the grid box */
-            height: 100%; /* Set height to fill the grid box */
-            overflow: hidden; /* Clip any overflow */
-            position: relative; /* Positioning context for absolute children */
-        }
-
         /* Image formatting */
-        .grid__box--profile-pic img {
+        .candidate-card__grid-box--profile-pic img {
             max-width: 100%; 
             height: auto;
         }
 
         /* Button Styles */
-        .grid__button {
+        .candidate-card__button {
             width: 100%; /* Fill the box completely */
             height: 100%; /* Fill the box completely */
             border: none; /* Remove border */
             cursor: pointer; /* Pointer cursor on hover */
         }
 
-        .grid__box--accept .grid__button {
+        .candidate-card__button--text {
+            display: none; /* Hide text by default */
+        }
+
+        .candidate-card__button:hover .candidate-card__button--text,
+        .candidate-card__button:focus .candidate-card__button--text {
+            display: inline; /* Show text on hover or focus */
+        }
+
+        .candidate-card__button:hover .candidate-card__button--icon,
+        .candidate-card__button:focus .candidate-card__button--icon {
+            display: none; /* Hide icon on hover or focus */
+        }
+
+
+        .candidate-card__grid-box--pick .candidate-card__button {
             color: green; /* Accept button color */
         }
 
-        .grid__box--reject .grid__button {
+        .candidate-card__grid-box--hide .candidate-card__button {
             color: red; /* Reject button color */
         }
     </style>
 </head>
 <body>
-    <div class="grid">
-        <div class="grid__box grid__box--name">
-            <h1 class="font--header font--header--grid"></h1>
+    <div class="candidate-card">
+        <div class="candidate-card__grid">
+            <div class="candidate-card__grid-box candidate-card__grid-box--name">
+                <h1 class="candidate-card__text--header"></h1>
+            </div>
+            <div class="candidate-card__grid-box candidate-card__grid-box--pick">
+                <button class="candidate-card__button candidate-card__text">
+                    <span class="candidate-card__button--text">
+                        Pick
+                    </span>
+                    <span class="candidate-card__button--icon" fill="currentColor">
+                        <!-- <svg xmlns="http://www.w3.org/2000/svg" >
+                            <path fill-rule="evenodd" d="M6,2 C5.68125129,2 5.36250258,2.171 5.2080032,2.5115 L3.87750858,5.435 L0.750021233,5.88125 C0.0397741059,5.98325 -0.251224717,6.857 0.254273238,7.36775 L2.56651389,9.704 L2.00401616,12.9725 C1.90651656,13.54175 2.35726473,14 2.86351269,14 C3.00601211,14 3.15301151,13.964 3.29251095,13.8845 L6,12.3425 L8.70748905,13.8845 C8.84698849,13.964 8.99398789,14 9.13648731,14 C9.64273527,14 10.0934834,13.54175 9.99598384,12.9725 L9.43348611,9.704 L11.7457268,7.36775 C12.2512247,6.857 11.9602259,5.98325 11.2499788,5.88125 L8.12249142,5.435 L6.7919968,2.5115 C6.63749742,2.171 6.31874871,2 6,2 M14,10 L16,10 L16,11 L14,11 L14,13 L13,13 L13,11 L11,11 L11,10 L13,10 L13,8 L14,8 L14,10 Z M6,3 C6.0728536,3 6.09499538,3.04857143 6.10428064,3.06928571 L7.3706476,5.85285714 L7.53278256,6.20857143 L7.91990659,6.26357143 L10.8983331,6.68928571 C10.9154751,6.69142857 10.9690439,6.69928571 10.9926142,6.76928571 C11.0083277,6.81714286 10.9990425,6.86 10.9640442,6.895 L8.76200847,9.12071429 L8.50344962,9.38214286 L8.56630371,9.74357143 L9.10127768,12.8564286 C9.10842019,12.8964286 9.10127768,12.9264286 9.07842164,12.9535714 C9.05413711,12.9821429 9.01842456,13 8.98699752,13 C8.97628376,13 8.95842748,12.9985714 8.9320002,12.9835714 L6.35355423,11.515 L6,11.3135714 L5.64644577,11.515 L3.06728555,12.9835714 C3.04157252,12.9985714 3.02371624,13 3.01300248,13 C2.98157544,13 2.94586289,12.9821429 2.92157836,12.9535714 C2.89872232,12.9264286 2.89157981,12.8964286 2.89800807,12.8564286 L3.43369629,9.74357143 L3.49655038,9.38214286 L3.23799153,9.12071429 L1.03595582,6.895 C1.00095752,6.86 0.991672257,6.81714286 1.00738578,6.76928571 C1.03095606,6.69928571 1.08452488,6.69142857 1.10095265,6.68928571 L4.08009341,6.26357143 L4.46721744,6.20857143 L4.6293524,5.85285714 L5.89643361,3.06714286 C5.90500462,3.04857143 5.9271464,3 6,3 Z"/>
+                        </svg> -->
+                    </span>
+                </button>
+            </div>
+            <div class="candidate-card__grid-box candidate-card__grid-box--hide">
+                <button class="candidate-card__button candidate-card__text">
+                    <span class="candidate-card__button--text">
+                        Hide
+                    </span>
+                    <span class="candidate-card__button--icon" fill="currentColor">
+                        <!-- <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" fill="none"/>
+                            <path d="M32,104c16.81,20.81,47.63,48,96,48s79.19-27.19,96-48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="224" y1="168" x2="200.62" y2="127.09" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="160" y1="192" x2="152.91" y2="149.45" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="96" y1="192" x2="103.09" y2="149.45" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="32" y1="168" x2="55.38" y2="127.09" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>
+                        </svg>                         -->
+                    </span>
+                </button>            
+            </div>
+            <div class="candidate-card__grid-box candidate-card__grid-box--profile-pic">
+                <img alt="Candidate Photo">
+            </div>
+            <div class="candidate-card__grid-box candidate-card__grid-box--politigram">
+                <div class="candidate-card__politigram"></div>
+                <div class="candidate-card__politigram--overlay">
+                    <h2 class="candidate-card__text--politigram"></h2>
+                </div>
+            </div>
         </div>
-        <div class="grid__box grid__box--accept">
-            <button class="grid__button font--base">Accept</button>
-        </div>        
-        <div class="grid__box grid__box--reject">
-            <button class="grid__button font--base">Reject</button>
-        </div>
-        <div class="grid__box grid__box--profile-pic">
-            <img alt="Candidate Photo">
-        </div>
-        <div class="grid__box grid__box--politigram">
-            <div class="politigram"></div>
-            <div class="politigram__text">
-                <h2 class="font--header font--header--politigram"></h2>
+        <div class="canidate-card__content">
+            <div class="canidate-card__content--professional">
+                <h2 class="candidate-card__text--header">Professional Background</h2>
+                <div class="canidate-card__professional--about-text"></div> <!-- About text container for professional background -->
+            </div>
+            <div class="canidate-card__content--personal">
+                <h2 class="candidate-card__text--header">Personal Background</h2>
+                <div class="canidate-card__personal--about-text"></div> <!-- About text container for personal background -->
             </div>
         </div>
     </div>
-    <div class="content">
-        <div class="content__professional">
-            <h2 class="font--header">Professional Background</h2>
-            <div class="content__professional__about-text"></div> <!-- About text container for professional background -->
-        </div>
-        <div class="content__personal">
-            <h2 class="font--header">Personal Background</h2>
-            <div class="content__personal__about-text"></div> <!-- About text container for personal background -->
-        </div>
-    </div>
+    
+    <!-- Icons -->
+    <script>
+        // Add this JavaScript to your existing script section
+    document.querySelectorAll('.candidate-card__button').forEach(button => {
+        button.addEventListener('mousedown', () => {
+            button.querySelector('.candidate-card__button--text').style.display = 'inline'; // Show text on click
+            button.querySelector('.candidate-card__button--icon').style.display = 'none'; // Hide icon on click
+        });
 
+        button.addEventListener('mouseup', () => {
+            button.querySelector('.candidate-card__button--text').style.display = 'none'; // Hide text on mouse up
+            button.querySelector('.candidate-card__button--icon').style.display = 'inline'; // Show icon on mouse up
+        });
+
+        button.addEventListener('mouseleave', () => {
+            button.querySelector('.candidate-card__button--text').style.display = 'none'; // Hide text on mouse leave
+            button.querySelector('.candidate-card__button--icon').style.display = 'inline'; // Show icon on mouse leave
+        });
+    });
+    </script>
+
+    <!-- Becca Johnson Poppe -->
     <script>
         const candidateId = 0;
         let selectedPolitigram = null;
@@ -175,45 +251,53 @@
             image: "https://info.kingcounty.gov/kcelections/vote/contests/GetPhoto.ashx?webapiaddress=https://websvc.kingcounty.gov/elections/WEBAPI/&candidateid=1604694&electionid=38&contestid=123797",
             about: {
                 professionalContent: {
-                    elected_experience: {
-                        text: "Lorem ipsum, dolor sit amet consectetur adipisicing elit.",
-                        community: [0, 10],
-                        liberty: [15, 25]
-                    },
-                    other_professional_experience: {
-                        text: "Dolorem Qui id vero ab perferendis aliquam sint.",
-                        humanitarianism: [5, 30],
-                        community: [31, 34]
+                    education: {
+                        text: "Master of Public Administration, and Certificate in Environmental Management, UW Evans School; BA, Whitman College",
+                        community: [[0, 32]],
+                        stewardship: [[0,32], [37, 77]]
                     },
                     occupation: {
-                        text: "Tenetur soluta totam omnis maxime exercitationem adipisci accusamus magni eligendi obcaecati, at porro doloremque unde.",
-                        prosperity: [20, 27]
+                        text: "King County Budget and Policy Manager"
                     }
                 },
                 personalContent: {
-                    community_service: {
-                        text: "Lorem ipsum, dolor sit amet consectetur adipisicing elit.",
-                        stewardship: [0, 10],
-                        humanitarianism: [15, 25]
-                    },
                     statement: {
-                        text: "Dolorem Qui id vero ab perferendis aliquam sint.",
-                        stewardship: [5, 30],
-                        humanitarianism: [31, 34]
+                        text: "I know what it takes to move progressive policy forward in King County because I’ve been doing it for over a decade. As Budget & Policy Manager for King County, I direct half the County’s $16 billion budget, including metro transit and parks. I’ve advanced environmental and racial justice imperatives to create a $20m Climate Equity program that funds green home energy conversions and new affordable housing. As the UW’s Director of Policy, Planning & State Operations, I implemented paid family and medical leave, and championed legislation that delivered affordable higher education to thousands of students. King County is bigger than 15 other states, we have the responsibility to lead on issues from homelessness to transit to climate change. I will bring my experience getting things done at the County to ensure we protect our environment, advance equity, and grow our economy. Helping the unhoused is an urgent priority, we must scale up supportive services that save lives and build healthy communities for everyone. We need safe, reliable public transportation throughout District 4, which is why I’ve proposed a Transportation Benefit District for the county. I will also increase investments in renewable energy and green development in public and private projects to ensure our region, and world, are livable for generations to come. Together, we can make real progress for our families, neighbors, and communities in District 4, and I would be honored to earn your vote. Endorsements: National Women’s Political Caucus, King County Young Democrats, UW Young Democrats, Public Lands Commissioner Hilary Franz, County Councilmember Joe McDermott, State Representatives: Liz Berry and Kristine Reeves, community leaders Dorothy Bullitt and Cary Moon, Seattle City Councilmember Lisa Herbold, Former City Councilmembers Nick Licata and Abel Pacheco, King Conservation District Supervisor Csenka Favorini-Csorba, and dozens of local business, nonprofit, and community leaders.",
+                        community: [[411, 611], [887, 1026], [1349, 1485], [1969, 1986]],
+                        humanitarianism: [[243, 409], [411, 611], [657, 748], [887, 1026]],
+                        prosperity: [[161, 241], [750, 885], [1026, 1171], [1173, 1347], [1928, 1952]],
+                        liberty: [[657, 748]],
+                        stewardship: [[0, 115], [243, 409], [657, 748], [750, 885], [1862, 1922]]
+                    }
+                },
+                "campaign": {
+                    "total_contributions": 20000,
+                    "total_spending": 10000,
+                    "top_donors": [
+                    {
+                        "name": "King County Democrats",
+                        "amount": 5000
                     },
+                    {
+                        "name": "King County Young Democrats",
+                        "amount": 5000
+                    }
+                    ]
                 },
             },
             politigram: {
-                "community": 90,
-                "humanitarianism": 70,
-                "prosperity": 75,
-                "liberty": 20,
-                "stewardship": 95
+                "community": 40,
+                "humanitarianism": 50,
+                "prosperity": 45,
+                "liberty": 30,
+                "stewardship": 85
             }
         }
-        document.querySelector('.grid__box--name h1').textContent = candidate.name;    
-        document.querySelector('.grid__box--profile-pic img').src = candidate.image;
+        document.querySelector('.candidate-card__grid-box--name h1').textContent = candidate.name;    
+        document.querySelector('.candidate-card__grid-box--profile-pic img').src = candidate.image;
     </script>
+
+    <!-- Politigram logic -->
     <script>
         const data = Object.entries(candidate.politigram).map(([key, value]) => ({
             name: key,
@@ -225,12 +309,12 @@
         // visually sets the minimum value for the radius of the smallest segment
         // as a percentage of the full radius
         // if we were to set this to 0, the smallest segment in a row would not even appear!
-        const MIN_RADIUS = 0.25
+        const MIN_RADIUS = 0.44
 
         // visually sets the minimum value for the arc of the smallest segment
         // as a percentage of the full arc
         // 0 === invisible
-        const MIN_ARC = 0.50
+        const MIN_ARC = 0.65
 
         const BRIGHTNESS = 0.55;
         
@@ -240,7 +324,7 @@
         // size of `side` / 100 for maximum politigram rating
         // TODO: side should match the width of the container it is in
         // Get the parent element
-        const parentElement = document.querySelector('.grid__box--politigram');
+        const parentElement = document.querySelector('.candidate-card__grid-box--politigram');
         const parentRect = parentElement.getBoundingClientRect();
         const side = Math.min(parentRect.width, parentRect.height);
         const radius = side / 200; 
@@ -253,14 +337,14 @@
         const arc = d3.arc()
             .innerRadius(0)
             .outerRadius(d => radius * (d.data.value + MIN_RADIUS * (100 - d.data.value)))
-            .cornerRadius(side / 7);
+            .cornerRadius(side / 10);
             
 
         // Hover length
         // TODO: (size / 10) arbitrarily added as scaler
         const arcHover = d3.arc()
             .innerRadius(0)
-            .outerRadius(d => (radius * (d.data.value + MIN_RADIUS * (100 - d.data.value))) + (side / 20)) // Increase radius on hover
+            .outerRadius(d => (radius * (d.data.value + MIN_RADIUS * (100 - d.data.value))) + (side / 10)) // Increase radius on hover
             .cornerRadius(side / 10);
 
         // New pie chart, computes start and end angles for each segment
@@ -268,7 +352,7 @@
             .value(d => (((d.value / totalValue) * (1 - MIN_ARC)) + (MIN_ARC / data.length)))
             .sort(null);
 
-        const svg = d3.select(".politigram")
+        const svg = d3.select(".candidate-card__politigram")
             .append("svg")
             .attr("width", side)
             .attr("height", side)
@@ -277,19 +361,17 @@
             .attr("transform", `translate(${side / 2}, ${side / 2})`);
 
         function updateSelectedName() {
-            const nameDiv = document.querySelector('.politigram__text');
+            const nameDiv = document.querySelector('.candidate-card__politigram--overlay');
             if (selectedPolitigram) {
                 const name = selectedPolitigram.__data__.data.name;
-                const color = d3.color(d3.select(selectedPolitigram).attr('fill')).darker(1);
+                const color = d3.color(d3.select(selectedPolitigram).attr('fill')).darker(2);
                 nameDiv.textContent = name.charAt(0).toUpperCase() + name.slice(1);
                 nameDiv.style.color = color;
-                nameDiv.style.boxShadow = '0px 0px 15px 15px rgba(255, 255, 255, .9)';
                 nameDiv.style.opacity = '1'; // Ensure visibility
-                nameDiv.classList.add('font--header', 'font--header--politigram'); // Add classes
+                nameDiv.classList.add('candidate-card__text--politigram'); // Add classes
                 setState(name);
             } else {
                 nameDiv.textContent = '';
-                nameDiv.style.boxShadow = '0px 0px 0px 0px rgba(255, 255, 255, 0)'; // Animate out
                 nameDiv.style.opacity = '0'; // Fade out text
                 setState(null);
             }
@@ -308,6 +390,11 @@
         document.addEventListener('mousedown', handleClick);
 
         function handleClick(event) {
+            // Check if the clicked target is a button
+            if (event.target.closest('.candidate-card__button')) {
+                return; // Exit the function if a button is clicked
+            }
+            
             const isClickInside = svg.node().contains(event.target);
             // deselect click
             const targetPath = d3.select(event.target).datum();
@@ -407,6 +494,8 @@
         // Call the rotateAndExpandPie function when the page loads
         rotateAndExpandPie();
     </script>
+
+    <!-- Text Highlighting -->
     <script>
         // Function to create <p> elements for each text field in 'about'
         function createAboutText(aboutContainer, content) {
@@ -414,7 +503,7 @@
 
             for (const key in content) {
                 const paragraphElement = document.createElement('p');
-                paragraphElement.className = 'font--base'; // Add class for styling
+                paragraphElement.className = 'candidate-card__text'; // Add class for styling
                 paragraphElement.id = key; // Set an ID for each paragraph
                 paragraphElement.textContent = content[key].text; // Set the text content
                 aboutContainer.appendChild(paragraphElement); // Append to the container
@@ -435,13 +524,9 @@
                     paragraph.innerHTML = paragraph.textContent;
                 // Apply styles based on the selected state
                 } else if (allContent[key][state]) {
-                    const [start, end] = allContent[key][state];
-                    const styledText = paragraph.textContent.slice(start, end);
-                    const beforeText = paragraph.textContent.slice(0, start);
-                    const afterText = paragraph.textContent.slice(end);
-
+                    
                     let color; // Declare the color variable
-
+                    
                     // Use switch to determine the color based on the state
                     switch (state) {
                         case 'community':
@@ -463,20 +548,45 @@
                             color = null;
                             break;
                     }
+                                            
+                    let styledText = '';
+                    let lastIndex = 0;
+                    let afterText = '';
+            
+                    allContent[key][state].forEach(([start, end]) => {
+                        const beforeText = paragraph.textContent.slice(lastIndex, start);
+                        const highlightedText = paragraph.textContent.slice(start, end);
+                        afterText = paragraph.textContent.slice(end);
+                        styledText += `${beforeText}<span class="highlighted-text" style="opacity: 0; background-color: ${color};">${highlightedText}</span>`;                        
+                        lastIndex = end;
+                    });
+
+                    styledText += `${afterText}`
 
                     // Update the paragraph with styled text
-                    paragraph.innerHTML = `${beforeText}<span style="color: white; background-color: ${color};">${styledText}</span>${afterText}`;
+                    paragraph.innerHTML = styledText;
+
+                    // Inside the setState function
+                    if (state !== null) {
+                        setTimeout(() => {
+                            document.querySelectorAll('.highlighted-text').forEach(span => {
+                                span.classList.add('candidate-card__text--highlighted'); // Add class to trigger fade-in
+                                span.style.opacity = '1'; // Set opacity to 1 for fade-in
+                            });
+                        }, 0);
+                    }
                 }
             }
         }
+                                
 
         // Initialize the about text on page load
         createAboutText(
-            document.getElementsByClassName('content__professional__about-text')[candidateId], 
+            document.getElementsByClassName('canidate-card__professional--about-text')[candidateId], 
             candidate.about.professionalContent
         ); // For professional background
         createAboutText(
-            document.getElementsByClassName('content__personal__about-text')[candidateId],
+            document.getElementsByClassName('canidate-card__personal--about-text')[candidateId],
             candidate.about.personalContent
         ); // For personal background
     </script>
